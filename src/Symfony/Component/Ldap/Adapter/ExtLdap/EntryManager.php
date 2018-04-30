@@ -13,6 +13,7 @@ namespace Symfony\Component\Ldap\Adapter\ExtLdap;
 
 use Symfony\Component\Ldap\Adapter\EntryManagerInterface;
 use Symfony\Component\Ldap\Entry;
+use Symfony\Component\Ldap\Exception\UpdateOperationException;
 use Symfony\Component\Ldap\Exception\LdapException;
 use Symfony\Component\Ldap\Exception\NotBoundException;
 
@@ -120,5 +121,23 @@ class EntryManager implements EntryManagerInterface
         }
 
         return $this->connection->getResource();
+    }
+
+    /**
+     * @param string                     $dn            Distinguished name to batch modify
+     * @param iterable|UpdateOperation[] $modifications An array or iterable of Modification instances
+     *
+     * @throws UpdateOperationException in case of an error
+     */
+    public function applyOperations(string $dn, iterable $modifications): void
+    {
+        $modificationsMapped = array();
+        foreach ($modifications as $modification) {
+            $modificationsMapped[] = $modification->toArray();
+        }
+
+        if (!@ldap_modify_batch($this->getConnectionResource(), $dn, $modificationsMapped)) {
+            throw new UpdateOperationException(sprintf('Error executing batch modification on "%s": "%s".', $dn, ldap_error($this->getConnectionResource())));
+        }
     }
 }
