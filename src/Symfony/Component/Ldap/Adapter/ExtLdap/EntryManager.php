@@ -124,19 +124,19 @@ class EntryManager implements EntryManagerInterface
     }
 
     /**
-     * @param string                     $dn            Distinguished name to batch modify
-     * @param iterable|UpdateOperation[] $modifications An array or iterable of Modification instances
+     * @param string                     $dn         Distinguished name to apply operations on
+     * @param iterable|UpdateOperation[] $operations An array or iterable of Modification instances
      *
      * @throws UpdateOperationException in case of an error
      */
-    public function applyOperations(string $dn, iterable $modifications): void
+    public function applyOperations(string $dn, iterable $operations): void
     {
-        $modificationsMapped = array();
-        foreach ($modifications as $modification) {
-            $modificationsMapped[] = $modification->toArray();
+        $operationsMapped = array();
+        foreach ($operations as $modification) {
+            $operationsMapped[] = $modification->toArray();
         }
 
-        if (!@ldap_modify_batch($this->getConnectionResource(), $dn, $modificationsMapped)) {
+        if (!@ldap_modify_batch($this->getConnectionResource(), $dn, $operationsMapped)) {
             throw new UpdateOperationException(sprintf('Error executing batch modification on "%s": "%s".', $dn, ldap_error($this->getConnectionResource())));
         }
     }
